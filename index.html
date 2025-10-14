@@ -57,29 +57,25 @@
   <footer>Desarrollado con OpenAI ChatKit</footer>
 
   <script type="module">
-    // Espera a que el componente esté listo
+    // Espera a que el web component esté registrado
     await customElements.whenDefined('openai-chatkit');
 
-    // Función para pedir el token temporal al backend
-    async function getToken(currentSecret) {
-      const endpoint = currentSecret ? "/api/chatkit/refresh" : "/api/chatkit/start";
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: currentSecret ? JSON.stringify({ currentClientSecret: currentSecret }) : null
-      });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Token ${res.status}: ${text}`);
-      }
-      const { client_secret } = await res.json();
-      if (!client_secret) throw new Error("Respuesta sin client_secret");
-      return client_secret;
-    }
-
-    const chat = document.getElementById("chat");
-    chat.setOptions({
-      api: { getClientSecret: getToken },
+    // Opciones del chat (claves válidas según la API)
+    const OPTIONS = {
+      api: {
+        async getClientSecret(existing) {
+          const endpoint = existing ? "/api/chatkit/refresh" : "/api/chatkit/start";
+          const res = await fetch(endpoint, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: existing ? JSON.stringify({ currentClientSecret: existing }) : null
+          });
+          if (!res.ok) throw new Error(`Token ${res.status}: ${await res.text()}`);
+          const { client_secret } = await res.json();
+          if (!client_secret) throw new Error("Respuesta sin client_secret");
+          return client_secret;
+        }
+      },
       locale: "es-ES",
       theme: {
         colorScheme: "light",
@@ -87,17 +83,31 @@
         radius: "round",
         density: "normal"
       },
-      // 👇 Mensaje inicial + sugerencias
-      conversation: {
-        starterPrompts: [
-          { title: "¿Qué servicios ofrece Megafy?", message: "Cuéntame sobre los servicios que ofrece Megafy." },
-          { title: "Necesito soporte técnico", message: "Necesito ayuda con un producto o servicio de Megafy." },
-          { title: "Información sobre planes", message: "¿Qué planes o precios ofrecen?" }
-        ],
-        welcome: {
-          message: "👋 ¡Hola! Soy el asistente inteligente de Megafy. ¿En qué puedo ayudarte hoy?"
-        }
+      composer: {
+        placeholder: "Escribe tu consulta…"
+      },
+      startScreen: {
+        greeting: "👋 ¡Hola! Soy el asistente de Megafy. ¿En qué puedo ayudarte?",
+        prompts: [
+          { name: "Servicios", prompt: "¿Qué servicios ofrece Megafy?", icon: "info" },
+          { name: "Soporte", prompt: "Necesito soporte técnico.", icon: "bolt" },
+          { name: "Planes",  prompt: "¿Qué planes o precios ofrecen?", icon: "search" }
+        ]
       }
+    };
+
+    const chat = document.getElementById("chat");
+
+    // ✅ Compatibilidad: usa setOptions si existe; si no, asigna .options
+    if (typeof chat.setOptions === "function") {
+      chat.setOptions(OPTIONS);
+    } else {
+      chat.options = OPTIONS;
+    }
+
+    // (Opcional) escucha errores emitidos por el widget
+    chat.addEventListener('chatkit.error', (evt) => {
+      console.error('ChatKit error:', evt.detail?.error || evt);
     });
   </script>
 </body>
