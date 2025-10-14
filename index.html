@@ -1,108 +1,45 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <title>Asistente Megafy</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+<script type="module">
+  window.addEventListener('load', async () => {
+    await customElements.whenDefined('openai-chatkit');
 
-  <!-- Carga del Web Component de ChatKit -->
-  <script src="https://cdn.platform.openai.com/deployments/chatkit/chatkit.js" defer></script>
-
-  <style>
-    body {
-      font-family: system-ui, sans-serif;
-      margin: 0;
-      padding: 20px;
-      background: #f8f9fa;
-      color: #222;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
-    }
-    header {
-      width: 100%;
-      max-width: 900px;
-      display: flex;
-      align-items: center;
-      justify-content: flex-start;
-      gap: 12px;
-      margin-bottom: 12px;
-    }
-    header img { height: 48px; }
-    header h1 { font-size: 1.5rem; font-weight: 600; margin: 0; }
-    openai-chatkit {
-      width: 100%;
-      max-width: 900px;
-      height: 600px;
-      display: block;
-      border-radius: 12px;
-      border: 1px solid #ddd;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      overflow: hidden;
-      background: #fff;
-    }
-    footer { text-align: center; font-size: 14px; color: #666; margin-top: 16px; }
-  </style>
-</head>
-
-<body>
-  <header>
-    <img src="https://megafy.net/wp-content/uploads/2022/06/logo-megafy-footer.png" alt="Logo Megafy" />
-    <h1>Asistente Inteligente</h1>
-  </header>
-
-  <openai-chatkit id="chat"></openai-chatkit>
-
-  <footer>Desarrollado con OpenAI ChatKit</footer>
-
-  <script type="module">
-    // Espera a que la página cargue y el custom element esté definido
-    window.addEventListener('load', async () => {
-      await customElements.whenDefined('openai-chatkit');
-
-      // Helper para pedir/renovar el token al backend
-      async function getClientSecret(existing) {
-        const endpoint = existing ? "/api/chatkit/refresh" : "/api/chatkit/start";
-        const res = await fetch(endpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: existing ? JSON.stringify({ currentClientSecret: existing }) : null
-        });
-        if (!res.ok) throw new Error(`Token ${res.status}: ${await res.text()}`);
-        const { client_secret } = await res.json();
-        if (!client_secret) throw new Error("Respuesta sin client_secret");
-        return client_secret;
-      }
-
-      const chat = document.getElementById("chat");
-
-      // ✅ Config sin setOptions: asignación directa a .options
-      chat.options = {
-        api: { getClientSecret },
-        locale: "es-ES",
-        theme: {
-          colorScheme: "light",
-          color: { accent: { primary: "#0078ff", level: 2 } },
-          radius: "round",
-          density: "normal"
-        },
-        composer: { placeholder: "Escribe tu consulta…" },
-        startScreen: {
-          greeting: "👋 ¡Hola! Soy el asistente de Megafy. ¿En qué puedo ayudarte?",
-          prompts: [
-            { name: "Servicios", prompt: "¿Qué servicios ofrece Megafy?", icon: "info" },
-            { name: "Soporte", prompt: "Necesito soporte técnico.", icon: "bolt" },
-            { name: "Planes",  prompt: "¿Qué planes o precios ofrecen?", icon: "search" }
-          ]
-        }
-      };
-
-      // (Opcional) escucha errores del widget
-      chat.addEventListener('chatkit.error', (evt) => {
-        console.error('ChatKit error:', evt.detail?.error || evt);
+    async function getClientSecret(existing) {
+      const endpoint = existing ? "/api/chatkit/refresh" : "/api/chatkit/start";
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: existing ? JSON.stringify({ currentClientSecret: existing }) : null
       });
+      if (!res.ok) throw new Error(`Token ${res.status}: ${await res.text()}`);
+      const { client_secret } = await res.json();
+      if (!client_secret) throw new Error("Respuesta sin client_secret");
+      return client_secret;
+    }
+
+    const chat = document.getElementById("chat");
+
+    // 🚫 IMPORTANTE: nada de setOptions aquí.
+    chat.options = {
+      api: { getClientSecret },
+      locale: "es-ES",
+      theme: {
+        colorScheme: "light",
+        color: { accent: { primary: "#0078ff", level: 2 } },
+        radius: "round",
+        density: "normal"
+      },
+      composer: { placeholder: "Escribe tu consulta…" },
+      startScreen: {
+        greeting: "👋 ¡Hola! Soy el asistente de Megafy. ¿En qué puedo ayudarte?",
+        prompts: [
+          { name: "Servicios", prompt: "¿Qué servicios ofrece Megafy?", icon: "info" },
+          { name: "Soporte", prompt: "Necesito soporte técnico.", icon: "bolt" },
+          { name: "Planes",  prompt: "¿Qué planes o precios ofrecen?", icon: "search" }
+        ]
+      }
+    };
+
+    chat.addEventListener('chatkit.error', (evt) => {
+      console.error('ChatKit error:', evt.detail?.error || evt);
     });
-  </script>
-</body>
-</html>
+  });
+</script>
