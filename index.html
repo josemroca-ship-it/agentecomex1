@@ -5,7 +5,7 @@
   <title>Asistente Megafy</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Carga del componente ChatKit -->
+  <!-- ChatKit Web Component -->
   <script src="https://cdn.platform.openai.com/deployments/chatkit/chatkit.js" async></script>
 
   <style>
@@ -20,7 +20,6 @@
       align-items: center;
       min-height: 100vh;
     }
-
     header {
       width: 100%;
       max-width: 900px;
@@ -30,17 +29,8 @@
       gap: 12px;
       margin-bottom: 12px;
     }
-
-    header img {
-      height: 48px;
-    }
-
-    header h1 {
-      font-size: 1.5rem;
-      font-weight: 600;
-      margin: 0;
-    }
-
+    header img { height: 48px; }
+    header h1 { font-size: 1.5rem; font-weight: 600; margin: 0; }
     openai-chatkit {
       width: 100%;
       max-width: 900px;
@@ -52,13 +42,7 @@
       overflow: hidden;
       background: #fff;
     }
-
-    footer {
-      text-align: center;
-      font-size: 14px;
-      color: #666;
-      margin-top: 16px;
-    }
+    footer { text-align: center; font-size: 14px; color: #666; margin-top: 16px; }
   </style>
 </head>
 
@@ -73,7 +57,10 @@
   <footer>Desarrollado con OpenAI ChatKit</footer>
 
   <script type="module">
-    // Pide un token temporal a tu backend (Pages Functions)
+    // Espera a que el componente esté listo
+    await customElements.whenDefined('openai-chatkit');
+
+    // Función para pedir el token temporal al backend
     async function getToken(currentSecret) {
       const endpoint = currentSecret ? "/api/chatkit/refresh" : "/api/chatkit/start";
       const res = await fetch(endpoint, {
@@ -81,24 +68,35 @@
         headers: { "Content-Type": "application/json" },
         body: currentSecret ? JSON.stringify({ currentClientSecret: currentSecret }) : null
       });
-      const data = await res.json();
-      return data.client_secret;
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Token ${res.status}: ${text}`);
+      }
+      const { client_secret } = await res.json();
+      if (!client_secret) throw new Error("Respuesta sin client_secret");
+      return client_secret;
     }
 
-    // Inicializa el chat
     const chat = document.getElementById("chat");
     chat.setOptions({
-      api: {
-        async getClientSecret(existing) {
-          return await getToken(existing);
-        }
-      },
+      api: { getClientSecret: getToken },
       locale: "es-ES",
       theme: {
-        primaryColor: "#0078ff",
-        backgroundColor: "#ffffff",
-        botAvatar: "💡",
-        userAvatar: "🙂"
+        colorScheme: "light",
+        color: { accent: { primary: "#0078ff", level: 2 } },
+        radius: "round",
+        density: "normal"
+      },
+      // 👇 Mensaje inicial + sugerencias
+      conversation: {
+        starterPrompts: [
+          { title: "¿Qué servicios ofrece Megafy?", message: "Cuéntame sobre los servicios que ofrece Megafy." },
+          { title: "Necesito soporte técnico", message: "Necesito ayuda con un producto o servicio de Megafy." },
+          { title: "Información sobre planes", message: "¿Qué planes o precios ofrecen?" }
+        ],
+        welcome: {
+          message: "👋 ¡Hola! Soy el asistente inteligente de Megafy. ¿En qué puedo ayudarte hoy?"
+        }
       }
     });
   </script>
