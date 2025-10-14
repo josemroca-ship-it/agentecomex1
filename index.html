@@ -1,3 +1,73 @@
-<!doctype html>
-<html><head><meta charset="utf-8"><title>Test</title></head>
-<body><h1>Hola Cloudflare Pages 👋</h1></body></html>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mi agente con ChatKit - Megafy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f8f9fa;
+      color: #222;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    openai-chatkit {
+      width: 100%;
+      height: 600px;
+      display: block;
+      border-radius: 12px;
+      border: 1px solid #ddd;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+    footer {
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <h1>💬 Mi Asistente Inteligente</h1>
+  <openai-chatkit id="chat"></openai-chatkit>
+  <footer>Desarrollado con OpenAI ChatKit</footer>
+
+  <script type="module">
+    // Función que pide el token temporal a tu backend en Cloudflare Pages
+    async function getToken(currentSecret) {
+      const endpoint = currentSecret ? "/api/chatkit/refresh" : "/api/chatkit/start";
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: currentSecret ? JSON.stringify({ currentClientSecret: currentSecret }) : null
+      });
+      const data = await res.json();
+      return data.client_secret;
+    }
+
+    // Inicializamos el componente ChatKit
+    const chat = document.getElementById("chat");
+    chat.setOptions({
+      api: {
+        async getClientSecret(currentSecret) {
+          return await getToken(currentSecret);
+        }
+      },
+      locale: "es-ES",
+      // Opcional: personaliza mensaje inicial o avatar
+      theme: {
+        primaryColor: "#0078ff",
+        backgroundColor: "#ffffff",
+        botAvatar: "💡",
+        userAvatar: "🙂"
+      }
+    });
+  </script>
+</body>
+</html>
