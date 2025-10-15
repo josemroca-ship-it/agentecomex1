@@ -5,6 +5,7 @@
   <title>AI Megafy - COMEX</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 
+  <!-- ChatKit -->
   <script src="https://cdn.platform.openai.com/deployments/chatkit/chatkit.js" defer></script>
 
   <style>
@@ -19,7 +20,7 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      background: #fff;
+      background: #fff;              /* fondo blanco global */
       color: var(--text-dark);
       font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, sans-serif;
       display: flex;
@@ -30,16 +31,42 @@
       min-height: 100vh;
     }
 
-    /* Encabezado oscuro */
+    /* ===== Encabezado oscuro con FADE hacia blanco ===== */
     header {
       width: 100%;
       background: var(--header-bg);
       color: var(--text-light);
       display: flex;
       justify-content: center;
-      padding: 24px 0;
+      padding: 24px 0 48px;  /* un poco más de padding inferior para lucir el fade */
       box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      position: relative;     /* CLAVE: para posicionar el pseudo-elemento */
+      overflow: visible;
+      isolation: isolate;     /* asegura mezcla correcta del fade */
     }
+    /* NUEVO: capa de degradado que se disuelve al blanco del body */
+    header::after {
+      content: "";
+      position: absolute;
+      left: 0; right: 0; bottom: -40px;
+      height: 80px;
+      pointer-events: none;
+      background: linear-gradient(
+        to bottom,
+        rgba(10, 20, 34, 0.85) 0%,
+        rgba(10, 20, 34, 0.35) 35%,
+        rgba(10, 20, 34, 0.12) 60%,
+        rgba(10, 20, 34, 0.00) 100%
+      );
+      /* animación sutil al cargar */
+      opacity: 0;
+      transform: translateY(8px);
+      animation: fadeDown 600ms ease-out forwards 80ms;
+    }
+    @keyframes fadeDown {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
     .brand {
       display: flex;
       align-items: center;
@@ -60,6 +87,10 @@
       box-shadow: 0 10px 30px rgba(0,0,0,0.1);
       border: 1px solid #eee;
       padding: 24px;
+      /* empuja un pelín hacia arriba para solapar bajo el fade y dar continuidad */
+      margin-top: -16px;  /* CLAVE: “se mete” bajo el degradado */
+      position: relative;
+      z-index: 0;
     }
     .card-head {
       display: flex;
