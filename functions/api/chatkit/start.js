@@ -3,12 +3,12 @@ export async function onRequestPost({ request, env }) {
     if (!env.OPENAI_API_KEY) return new Response('Missing OPENAI_API_KEY', { status: 500 });
     if (!env.CHATKIT_WORKFLOW_ID) return new Response('Missing CHATKIT_WORKFLOW_ID', { status: 500 });
 
-    // 1) Lee/crea un user id (persistimos en cookie 1 año)
+    // 1) Lee/crea un user id (string) y persiste en cookie 1 año
     const cookie = request.headers.get('Cookie') || '';
     const match = cookie.match(/(?:^|;\s*)megafy_uid=([^;]+)/);
     const uid = match ? decodeURIComponent(match[1]) : `web-${crypto.randomUUID()}`;
 
-    // 2) Llama a la API de ChatKit Sessions con workflow + user
+    // 2) Llama a ChatKit Sessions con workflow y user (string)
     const r = await fetch("https://api.openai.com/v1/chatkit/sessions", {
       method: "POST",
       headers: {
@@ -17,10 +17,10 @@ export async function onRequestPost({ request, env }) {
         "OpenAI-Beta": "chatkit_beta=v1"
       },
       body: JSON.stringify({
-        workflow: { id: env.CHATKIT_WORKFLOW_ID }, // ⚠️ 'workflow', no 'workflow_id'
-        user: { id: uid }                           // ⚠️ requerido
-        // version: "wfv_..."                       // opcional: versión concreta del workflow
-        // metadata: { plan: "free" }               // opcional: metadatos de sesión
+        workflow: env.CHATKIT_WORKFLOW_ID, // puede ser string 'wf_...'
+        user: uid                          // 🔹 string, no objeto
+        // version: "wfv_..."              // opcional
+        // metadata: { plan: "free" }      // opcional
       })
     });
 
