@@ -2,34 +2,170 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <title>ChatKit — mínimo</title>
+  <title>Asistente Megafy</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Carga del Web Component -->
+
+  <!-- Carga del Web Component de ChatKit -->
   <script src="https://cdn.platform.openai.com/deployments/chatkit/chatkit.js" defer></script>
+
   <style>
-    html, body { height: 100%; margin: 0; background: #f2f2f2; }
-    /* Caja visible del host */
+    :root {
+      --w: 1000px;
+      --card-bg: rgba(255,255,255,0.06);
+      --card-border: rgba(255,255,255,0.12);
+      --text: #e8eef7;
+      --muted: #a9b4c0;
+      --brand: #4cc2ff;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+      color: var(--text);
+      background:
+        radial-gradient(1200px 600px at 10% -10%, #0b1b2f 20%, transparent 60%),
+        radial-gradient(1200px 700px at 110% 20%, #0e2746 10%, transparent 50%),
+        linear-gradient(180deg, #0a0f1a 0%, #0a1422 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      padding: 24px;
+    }
+
+    /* Header */
+    .header {
+      width: 100%;
+      max-width: var(--w);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      border: 1px solid var(--card-border);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.06);
+    }
+    .brand img {
+      height: 40px;
+      filter: drop-shadow(0 2px 6px rgba(0,0,0,0.35));
+    }
+    .brand h1 {
+      margin: 0;
+      font-size: 1.25rem;
+      letter-spacing: .2px;
+      font-weight: 600;
+    }
+    .sub {
+      color: var(--muted);
+      font-size: .95rem;
+    }
+
+    /* Card contenedora del chat */
+    .card {
+      width: 100%;
+      max-width: var(--w);
+      border-radius: 16px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      box-shadow:
+        0 20px 60px rgba(0,0,0,0.45),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+      backdrop-filter: blur(6px);
+      padding: 16px;
+    }
+
+    /* Barra superior de la card */
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 6px 12px;
+    }
+    .status {
+      font-size: .9rem;
+      color: var(--muted);
+    }
+    .status .dot {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      margin-right: 8px;
+      background: #11d47b;
+      box-shadow: 0 0 10px #11d47b55;
+    }
+    .badge {
+      font-size: .8rem;
+      color: #07131f;
+      background: linear-gradient(180deg, #7dd3ff, #52b8ff);
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.35);
+    }
+
+    /* Host del ChatKit (modo embebido) */
     openai-chatkit {
       display: block;
-      height: 80vh;           /* grande para que no quede fuera de pantalla */
       width: 100%;
-      max-width: 900px;
-      margin: 24px auto;
-      outline: 3px dashed red; /* para ver el contenedor sí o sí */
-      background: #fff;
-      position: relative;
-      z-index: 1000;
+      height: clamp(520px, 70vh, 720px);
+      border-radius: 12px;
+      background: rgba(1,7,16,0.45);
+      border: 1px solid rgba(255,255,255,0.12);
+      overflow: clip;
+    }
+
+    /* Footer */
+    .footer {
+      width: 100%;
+      max-width: var(--w);
+      text-align: center;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    /* Responsive */
+    @media (max-width: 560px) {
+      .brand h1 { font-size: 1.05rem; }
+      .sub { font-size: .85rem; }
+      body { padding: 16px; gap: 16px; }
+      .card { padding: 12px; }
     }
   </style>
 </head>
 <body>
-  <openai-chatkit id="chat"></openai-chatkit>
+  <!-- Header con logo -->
+  <div class="header">
+    <div class="brand">
+      <img src="https://megafy.net/wp-content/uploads/2022/06/logo-megafy-footer.png" alt="Logo Megafy" />
+      <div>
+        <h1>Asistente Megafy</h1>
+        <div class="sub">Tu copiloto de soporte y ventas, 24/7</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Card con el chat embebido -->
+  <div class="card">
+    <div class="card-head">
+      <div class="status"><span class="dot"></span>Disponible</div>
+      <div class="badge">Beta</div>
+    </div>
+    <openai-chatkit id="chat"></openai-chatkit>
+  </div>
+
+  <div class="footer">Desarrollado con OpenAI ChatKit • Megafy</div>
 
   <script type="module">
-    // Espera a que el componente esté registrado
+    // Esperamos a que el web component esté listo
     await customElements.whenDefined('openai-chatkit');
 
-    // Función mínima para obtener el token
+    // Token mínimo (usa tu Cloudflare Function /api/chatkit/start y /api/chatkit/refresh)
     async function getClientSecret(existing) {
       const url = existing ? "/api/chatkit/refresh" : "/api/chatkit/start";
       const res = await fetch(url, {
@@ -45,19 +181,14 @@
 
     const chat = document.getElementById("chat");
 
-    // Config mínima — nada de theme/frame/prompts
+    // ✅ Config mínima para evitar incompatibilidades: inline por CSS, sin theme ni frame
     chat.setOptions({
       api: { getClientSecret },
       locale: "es-ES"
     });
 
-    // Intenta abrir el chat (si es launcher flotante)
-    chat.addEventListener('chatkit.ready', () => {
-      if (typeof chat.open === 'function') chat.open();
-      console.log('✅ chatkit.ready — intenté abrir el chat');
-    });
-
-    // Por si el widget emite errores
+    // Logs útiles por si algo falla en algún navegador
+    chat.addEventListener('chatkit.ready', () => console.log('✅ chatkit.ready'));
     chat.addEventListener('chatkit.error', (e) => console.error('❌ chatkit.error', e.detail || e));
   </script>
 </body>
