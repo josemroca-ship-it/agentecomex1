@@ -10,7 +10,7 @@ export async function onRequestPost({ env }) {
         "Content-Type": "application/json",
         "OpenAI-Beta": "chatkit_beta=v1"
       },
-      // 👇 La API espera `workflow` (no `workflow_id`)
+      // eeeeee👇 La API espera `workflow` (no `workflow_id`)
       body: JSON.stringify({
         // puedes pasar el ID como string…
         workflow: env.CHATKIT_WORKFLOW_ID
