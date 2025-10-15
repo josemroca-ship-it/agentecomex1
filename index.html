@@ -114,6 +114,7 @@
             radius: 'round',
             density: 'normal'
           },
+          frame: { mode: "inline" }, // 👈 fuerza el modo integrado
           composer: { placeholder: 'Escribe tu consulta…' },
           startScreen: {
             greeting: '👋 ¡Hola! Soy el asistente de Megafy. ¿En qué puedo ayudarte?',
@@ -137,6 +138,10 @@
         chat.addEventListener('chatkit.ready', () => log('✅ chatkit.ready'));
         chat.addEventListener('chatkit.error', (evt) => log('❌ chatkit.error:', evt.detail || evt));
         chat.addEventListener('chatkit.state', (evt) => log('ℹ️ chatkit.state:', evt.detail || evt));
+        // Cuando el chat esté listo, ábrelo automáticamente
+        chat.addEventListener('chatkit.ready', () => {
+          if (typeof chat.open === 'function') chat.open();
+        });
 
         // Verificación final tras un pequeño delay
         setTimeout(() => {
