@@ -8,15 +8,24 @@ export async function onRequestPost({ env }) {
       headers: {
         "Authorization": `Bearer ${env.OPENAI_API_KEY}`,
         "Content-Type": "application/json",
-        "OpenAI-Beta": "chatkit_beta=v1"   // ⚠️ Obligatorio
+        "OpenAI-Beta": "chatkit_beta=v1"
       },
+      // 👇 La API espera `workflow` (no `workflow_id`)
       body: JSON.stringify({
-        workflow_id: env.CHATKIT_WORKFLOW_ID
+        // puedes pasar el ID como string…
+        workflow: env.CHATKIT_WORKFLOW_ID
+        // …o como objeto: { id: env.CHATKIT_WORKFLOW_ID }
+        // workflow: { id: env.CHATKIT_WORKFLOW_ID }
+
+        // opcional: versión concreta del workflow (si tienes wfv_...)
+        // version: "wfv_xxxxx"
+
+        // opcional: identificador de usuario final (para trazas)
+        // user: { id: "user-123" }
       })
     });
 
     const txt = await r.text();
-    console.log('OpenAI response status', r.status, txt); // útil para logs en Cloudflare
     if (!r.ok) return new Response(`OpenAI ${r.status}: ${txt}`, { status: r.status });
 
     const data = JSON.parse(txt || "{}");
@@ -26,6 +35,6 @@ export async function onRequestPost({ env }) {
       headers: { "Content-Type": "application/json" }
     });
   } catch (e) {
-    return new Response(`Server error: ${e?.message}`, { status: 500 });
+    return new Response(`Server error: ${e?.message || e}`, { status: 500 });
   }
 }
