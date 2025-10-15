@@ -1,157 +1,64 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <title>Asistente Megafy — Diagnóstico2</title>
+  <meta charset="utf-8" />
+  <title>ChatKit — mínimo</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-  <!-- ChatKit Web Component2 -->
+  <!-- Carga del Web Component -->
   <script src="https://cdn.platform.openai.com/deployments/chatkit/chatkit.js" defer></script>
-
   <style>
-    :root { --w: 900px; }
-    body {
-      font-family: system-ui, sans-serif;
-      margin: 0; padding: 20px; background: #f8f9fa; color: #222;
-      display: flex; flex-direction: column; align-items: center; min-height: 100vh;
-    }
-    header {
-      width: 100%; max-width: var(--w);
-      display: flex; align-items: center; gap: 12px; margin-bottom: 12px;
-    }
-    header img { height: 48px; }
-    header h1 { font-size: 1.4rem; margin: 0; }
-    #diag {
-      width: 100%; max-width: var(--w);
-      background: #fff; border: 1px solid #ddd; border-radius: 8px;
-      padding: 10px; margin: 10px 0; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      white-space: pre-wrap; word-break: break-word; font-size: 12px; color: #333;
-    }
+    html, body { height: 100%; margin: 0; background: #f2f2f2; }
+    /* Caja visible del host */
     openai-chatkit {
-      width: 100%; max-width: var(--w); height: 600px; display: block;
-      border-radius: 12px; border: 1px solid #ddd; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      overflow: hidden; background: #fff;
+      display: block;
+      height: 80vh;           /* grande para que no quede fuera de pantalla */
+      width: 100%;
+      max-width: 900px;
+      margin: 24px auto;
+      outline: 3px dashed red; /* para ver el contenedor sí o sí */
+      background: #fff;
+      position: relative;
+      z-index: 1000;
     }
-    footer { text-align: center; font-size: 12px; color: #666; margin-top: 10px; }
   </style>
 </head>
 <body>
-  <header>
-    <img src="https://megafy.net/wp-content/uploads/2022/06/logo-megafy-footer.png" alt="Logo Megafy" />
-    <h1>Asistente Megafy — Diagnóstico</h1>
-  </header>
-
-  <div id="diag">Iniciando diagnóstico…</div>
-
   <openai-chatkit id="chat"></openai-chatkit>
 
-  <footer>Desarrollado con OpenAI ChatKit</footer>
-
   <script type="module">
-    const $d = document.getElementById('diag');
-    const log = (...a) => {
-      console.log(...a);
-      $d.textContent += '\n' + a.map(x => typeof x === 'string' ? x : JSON.stringify(x, null, 2)).join(' ');
-    };
-    const step = t => $d.textContent += '\n\n— ' + t + ' —';
+    // Espera a que el componente esté registrado
+    await customElements.whenDefined('openai-chatkit');
 
-    window.addEventListener('error', e => log('JS error:', e.message));
-    window.addEventListener('unhandledrejection', e => log('Promise rejection:', e.reason));
+    // Función mínima para obtener el token
+    async function getClientSecret(existing) {
+      const url = existing ? "/api/chatkit/refresh" : "/api/chatkit/start";
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: existing ? JSON.stringify({ currentClientSecret: existing }) : null
+      });
+      if (!res.ok) throw new Error(`Token ${res.status}: ${await res.text()}`);
+      const { client_secret } = await res.json();
+      if (!client_secret) throw new Error("Sin client_secret");
+      return client_secret;
+    }
 
-    window.addEventListener('load', async () => {
-      try {
-        step('1) Registro del web component');
-        if (!customElements.get('openai-chatkit')) {
-          log('Esperando customElements.whenDefined("openai-chatkit")…');
-          await customElements.whenDefined('openai-chatkit');
-        }
-        log('openai-chatkit definido:', !!customElements.get('openai-chatkit'));
+    const chat = document.getElementById("chat");
 
-        step('2) Comprobación de elemento en el DOM');
-        const chat = document.getElementById('chat');
-        if (!chat) { log('❌ No existe #chat'); return; }
-        log('Elemento #chat:', chat.tagName, 'shadowRoot?', !!chat.shadowRoot);
-
-        step('3) Petición de token a /api/chatkit/start');
-        let tokenJSON = null;
-        try {
-          const r = await fetch('/api/chatkit/start', { method: 'POST' });
-          log('start status:', r.status);
-          const text = await r.text();
-          log('start raw response:', text);
-          try { tokenJSON = JSON.parse(text); } catch(e) { log('⚠️ Respuesta no-JSON'); }
-          if (!r.ok) { log('❌ start no-OK'); return; }
-          if (!tokenJSON?.client_secret) { log('❌ Falta client_secret'); return; }
-          log('✅ client_secret recibido (truncado):', tokenJSON.client_secret.slice(0, 12) + '…');
-        } catch (err) {
-          log('❌ Error fetch /api/chatkit/start:', err);
-          return;
-        }
-
-        step('4) ¿Existe setOptions? ¿Existe la propiedad options?');
-        log('typeof chat.setOptions:', typeof chat.setOptions);
-        log('Tiene descriptor "options"?', 'options' in chat);
-
-        step('5) Asignación de opciones');
-        const OPTIONS = {
-          api: {
-            async getClientSecret(existing) {
-              if (!existing) return tokenJSON.client_secret;
-              // refresh opcional
-              const rr = await fetch('/api/chatkit/refresh', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ currentClientSecret: existing })
-              });
-              const td = await rr.json().catch(() => ({}));
-              return td?.client_secret || existing;
-            }
-          },
-          locale: 'es-ES',
-          theme: {
-            colorScheme: 'light',
-            color: { accent: { primary: '#0078ff', level: 2 } },
-            radius: 'round',
-            density: 'normal'
-          },
-          frame: { mode: "inline" }, // 👈 fuerza el modo integrado
-          composer: { placeholder: 'Escribe tu consulta…' },
-          startScreen: {
-            greeting: '👋 ¡Hola! Soy el asistente de Megafy. ¿En qué puedo ayudarte?',
-            prompts: [
-              { name: 'Servicios', prompt: '¿Qué servicios ofrece Megafy?', icon: 'info' },
-              { name: 'Soporte',   prompt: 'Necesito soporte técnico.',   icon: 'bolt' },
-              { name: 'Planes',    prompt: '¿Qué planes o precios ofrecen?', icon: 'search' }
-            ]
-          }
-        };
-
-        if (typeof chat.setOptions === 'function') {
-          log('Usando chat.setOptions(OPTIONS)…');
-          chat.setOptions(OPTIONS);
-        } else {
-          log('Usando asignación chat.options = OPTIONS…');
-          chat.options = OPTIONS;
-        }
-
-        step('6) Eventos del widget');
-        chat.addEventListener('chatkit.ready', () => log('✅ chatkit.ready'));
-        chat.addEventListener('chatkit.error', (evt) => log('❌ chatkit.error:', evt.detail || evt));
-        chat.addEventListener('chatkit.state', (evt) => log('ℹ️ chatkit.state:', evt.detail || evt));
-        // Cuando el chat esté listo, ábrelo automáticamente
-        chat.addEventListener('chatkit.ready', () => {
-          if (typeof chat.open === 'function') chat.open();
-        });
-
-        // Verificación final tras un pequeño delay
-        setTimeout(() => {
-          log('Estado final: typeof chat.setOptions =', typeof chat.setOptions, ' | options asignadas?', !!chat.options);
-          log('Si no ves "chatkit.ready" arriba y no hay errores, revisa allowlist del dominio en el agente y CSP del sitio.');
-        }, 1200);
-      } catch (e) {
-        log('❌ Error general:', e?.message || e);
-      }
+    // Config mínima — nada de theme/frame/prompts
+    chat.setOptions({
+      api: { getClientSecret },
+      locale: "es-ES"
     });
+
+    // Intenta abrir el chat (si es launcher flotante)
+    chat.addEventListener('chatkit.ready', () => {
+      if (typeof chat.open === 'function') chat.open();
+      console.log('✅ chatkit.ready — intenté abrir el chat');
+    });
+
+    // Por si el widget emite errores
+    chat.addEventListener('chatkit.error', (e) => console.error('❌ chatkit.error', e.detail || e));
   </script>
 </body>
 </html>
